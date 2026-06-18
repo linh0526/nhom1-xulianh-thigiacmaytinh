@@ -1,7 +1,12 @@
+import sys
+import os
 from pathlib import Path
 import tempfile
 
 import streamlit as st
+
+# Thêm thư mục gốc của dự án vào sys.path để import được thư mục 'src'
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.inference.predictor import predict_fake_news
 
