@@ -1,0 +1,4 @@
+case_id,image_path,text,label,case_type,note
+001,data/demo_cases/images/sample.jpg,"Mua lon gay ngap tai Ha Noi",real,matched_image_text,"Anh va text khop ngu canh"
+002,data/demo_cases/images/sample.jpg,"Khan cap! Bao lon vua tan pha mien Trung, chia se ngay!",suspicious,clickbait_text,"Text co dau hieu giat tit"
+
