@@ -83,10 +83,64 @@ streamlit run app/streamlit_app.py
 python run_app.py --image path/to/your-image.jpg --text "Nội dung bài viết tiếng Việt"
 ```
 
+## Image Pipeline - TV2
+
+Module xử lý ảnh nằm trong thư mục `src/image/`.
+
+File chính:
+
+- `src/image/preprocess.py`
+- `src/image/ela.py`
+- `tests/test_image_pipeline.py`
+
+Các chức năng đã có:
+
+- Đọc ảnh từ đường dẫn bằng PIL.
+- Kiểm tra file ảnh có tồn tại không.
+- Chỉ nhận các định dạng `.jpg`, `.jpeg`, `.png`.
+- Chuyển ảnh về RGB.
+- Resize ảnh về `224x224` để chuẩn bị cho CLIP.
+- Tính `ela_score` bằng Error Level Analysis.
+- Trả kết quả phân tích ảnh theo format chung cho predictor.
+
+Ví dụ output của `analyze_image()`:
+
+```python
+{
+    "image_path": "path/to/image.jpg",
+    "image_valid": True,
+    "image_size": [640, 480],
+    "ela_score": 0.123,
+    "ela_image_path": None,
+    "image_reasons": []
+}
+```
+
 ## Chạy test
 
 ```bash
-pytest
+python -m pytest tests/test_image_pipeline.py -v
+```
+
+Kết quả đúng cho phần TV2:
+
+```text
+7 passed
+```
+
+Project có cấu hình `pytest.ini`:
+
+```ini
+[pytest]
+addopts = --basetemp=.pytest_run -p no:cacheprovider
+```
+
+Cấu hình này giúp pytest tạo thư mục tạm `.pytest_run` trong project, tránh lỗi quyền truy cập thư mục temp của Windows.
+
+Chỉ chạy toàn bộ test suite khi các phần còn lại đã hoàn chỉnh:
+
+```bash
+python -m pytest
 ```
 
 ## Phân công nhanh
