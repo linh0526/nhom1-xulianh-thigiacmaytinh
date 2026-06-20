@@ -4,6 +4,7 @@ from PIL import Image
 
 
 SUPPORTED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
+DEFAULT_CLIP_IMAGE_SIZE = (224, 224)
 
 
 def load_image(image_path: str) -> Image.Image:
@@ -20,6 +21,16 @@ def load_image(image_path: str) -> Image.Image:
 
     with Image.open(path) as image:
         return image.convert("RGB")
+
+
+def preprocess_image(
+    image: Image.Image,
+    target_size: tuple[int, int] = DEFAULT_CLIP_IMAGE_SIZE,
+) -> Image.Image:
+    return image.convert("RGB").resize(
+        target_size,
+        Image.Resampling.LANCZOS
+    )
 
 
 def analyze_image(image_path: str) -> dict:
