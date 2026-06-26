@@ -7,26 +7,44 @@
 </head>
 <body>
   <div class="container">
-    <h2>Fake News Detector</h2>
-    <p class="subtitle">Select an image and text on the page, right-click, and choose "Analyze Fake News".</p>
+    <div class="header">
+      <h2 data-i18n="app_title">Fake News Detector</h2>
+      <button id="lang-toggle" class="lang-btn">VI</button>
+    </div>
+    <p class="subtitle" data-i18n="app_desc">Select an image and text on the page, right-click, and choose "Analyze Fake News".</p>
     
     <div id="loading" class="hidden">
       <div class="spinner"></div>
-      <p>Analyzing...</p>
+      <p data-i18n="analyzing">Analyzing...</p>
     </div>
 
     <div id="result-container" class="hidden">
-      <div id="result-badge" class="badge"></div>
-      <p id="confidence-text"></p>
-      
-      <div class="scores">
-        <div>Similarity: <span id="score-sim"></span></div>
-        <div>Text Suspicious: <span id="score-text"></span></div>
-        <div>Image Manipulation: <span id="score-img"></span></div>
+      <div class="result-header">
+        <div id="result-badge" class="badge"></div>
+        <div id="tags-container" class="tags"></div>
+      </div>
+      <div class="confidence-circle">
+        <span id="confidence-number"></span>%
+        <div data-i18n="confidence" class="conf-label">Confidence</div>
       </div>
       
-      <h4>Reasons:</h4>
+      <div class="scores">
+        <div><span data-i18n="score_sim">Similarity</span>: <span id="score-sim" class="bold-score"></span></div>
+        <div><span data-i18n="score_txt">Text Suspicious</span>: <span id="score-text" class="bold-score"></span></div>
+        <div><span data-i18n="score_img">Image Manipulation</span>: <span id="score-img" class="bold-score"></span></div>
+      </div>
+      
+      <h4 data-i18n="reasons">Reasons:</h4>
       <ul id="reasons-list"></ul>
+
+      <div class="feedback-section">
+        <p data-i18n="feedback_prompt">Is this correct?</p>
+        <div class="feedback-buttons">
+          <button id="btn-correct" class="btn-fb">👍 <span data-i18n="correct">Yes</span></button>
+          <button id="btn-incorrect" class="btn-fb">👎 <span data-i18n="incorrect">No</span></button>
+        </div>
+        <p id="feedback-thanks" class="hidden" data-i18n="thanks">Thanks for your feedback!</p>
+      </div>
     </div>
     
     <div id="error-container" class="hidden">

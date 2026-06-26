@@ -100,3 +100,20 @@ ul {
   color: #dc2626;
   font-size: 13px;
 }
+
+.header { display: flex; justify-content: space-between; align-items: center; }
+.lang-btn { background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
+.result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.tags { display: flex; gap: 4px; flex-wrap: wrap; }
+.tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #fee2e2; color: #991b1b; font-weight: bold; }
+.confidence-circle { text-align: center; margin: 12px 0; }
+#confidence-number { font-size: 32px; font-weight: bold; color: #3b82f6; }
+.conf-label { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
+.bold-score { font-weight: bold; color: #111827; }
+.feedback-section { margin-top: 16px; padding-top: 12px; border-top: 1px solid #e5e7eb; text-align: center; }
+.feedback-section p { font-size: 13px; font-weight: bold; margin-bottom: 8px; }
+.feedback-buttons { display: flex; justify-content: center; gap: 12px; }
+.btn-fb { display: flex; align-items: center; gap: 4px; padding: 6px 12px; border: 1px solid #d1d5db; border-radius: 4px; background: white; cursor: pointer; transition: 0.2s; }
+.btn-fb:hover { background: #f3f4f6; }
+#feedback-thanks { color: #059669; margin-top: 8px; }
+

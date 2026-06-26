@@ -2,16 +2,16 @@
 
 ## 0. Tóm tắt dự án
 
-Dự án xây dựng một ứng dụng hỗ trợ phát hiện nguy cơ tin giả dựa trên **hình ảnh kèm nội dung văn bản**. Trong phạm vi môn Thị giác máy tính và Xử lý ảnh, hệ thống ưu tiên phân tích mối quan hệ giữa ảnh và chữ, đồng thời có thể mở rộng thêm các tín hiệu xử lý ảnh như ELA, noise analysis, metadata analysis hoặc image forensic.
+Dự án xây dựng một công cụ hỗ trợ phát hiện nguy cơ tin giả dựa trên **hình ảnh kèm nội dung văn bản**. Trong phạm vi môn Thị giác máy tính và Xử lý ảnh, hệ thống ưu tiên phân tích mối quan hệ giữa ảnh và chữ, đồng thời kết hợp kiểm tra các dấu hiệu đáng ngờ trong văn bản.
 
-Sản phẩm mục tiêu trong 3 tuần là một **app demo** có thể chạy được, cho phép người dùng upload ảnh, nhập nội dung bài viết tiếng Việt, sau đó trả về kết quả `Real`, `Fake` hoặc `Suspicious` kèm điểm tin cậy và lý do cảnh báo.
+Sản phẩm mục tiêu trong 3 tuần là một **Browser Extension (Tiện ích mở rộng trình duyệt)** kết hợp hệ thống backend API. Extension cho phép người dùng quét nhanh nội dung (chọn ảnh và bôi đen văn bản) ngay trên các nền tảng mạng xã hội (Facebook, X, báo mạng...) thông qua **phím tắt hoặc context menu**. Hệ thống sau đó trả về kết quả `Real`, `Fake` hoặc `Suspicious` kèm điểm tin cậy và lý do cảnh báo trực tiếp trên màn hình.
 
 Hướng thiết kế ưu tiên:
 
-- Dùng mô hình pretrained để tiết kiệm tài nguyên.
-- Không bắt buộc train mô hình lớn.
-- Dễ mở rộng về sau thành web app, API hoặc browser extension.
-- Có thể demo tiếng Việt bằng cách dịch văn bản sang tiếng Anh trước khi đưa vào CLIP.
+- Dùng mô hình pretrained (CLIP) để tiết kiệm tài nguyên.
+- Tách biệt rõ ràng Client (Browser Extension) và Server (FastAPI).
+- Chú trọng trải nghiệm người dùng nhanh, gọn (quét bằng phím tắt).
+- Có thể demo tiếng Việt bằng cách dịch văn bản hoặc tiền xử lý trước khi đưa vào CLIP.
 
 ---
 
@@ -64,117 +64,77 @@ Reasons:
 
 Trong 3 tuần, sản phẩm nên ưu tiên:
 
-- Có giao diện app để demo.
-- Có pipeline AI chạy thật.
+- Xây dựng được **Backend Server (API)** chạy pipeline AI ổn định.
+- Phát triển một **Browser Extension** hoạt động được ở mức prototype (quét ảnh/text qua phím tắt hoặc context menu và hiện popup thông báo).
 - Có test case tiếng Việt.
 - Có báo cáo rõ logic và mô hình sử dụng.
 
 Không nên đặt mục tiêu:
 
 - Xác minh tin thật/giả tuyệt đối.
-- Crawl tự động mọi bài đăng trên Facebook/TikTok.
+- Extension quét DOM tự động hoàn toàn mọi bài viết (auto-scan feed) - tính năng này quá phức tạp và rủi ro.
 - Train mô hình deep learning lớn từ đầu.
-- Làm extension hoàn chỉnh nếu chưa có app ổn định.
 
 ---
 
 # 2. Features
 
-## 2.1. MVP Features
+## 2.1. Kiến trúc Client - Server
 
-Đây là các tính năng bắt buộc để có sản phẩm demo.
+Do mô hình AI (CLIP) khá nặng để chạy trực tiếp trên trình duyệt, hệ thống bắt buộc chia làm 2 phần:
+- **Backend (FastAPI/Flask)**: Chạy pipeline AI, nhận ảnh/text, phân tích và trả về kết quả JSON.
+- **Client (Browser Extension)**: Lắng nghe thao tác người dùng, lấy dữ liệu DOM, gọi API và hiển thị UI cảnh báo.
 
-### Feature 1: Upload ảnh và nhập nội dung
+## 2.2. MVP Features (Các tính năng bắt buộc)
 
-Người dùng có thể:
+### Feature 1: Quét nội dung bằng Phím tắt / Context Menu (Extension)
 
-- Upload ảnh từ máy tính.
-- Nhập hoặc dán nội dung bài viết tiếng Việt.
-- Bấm nút phân tích.
+Người dùng có thể thao tác trực tiếp trên mạng xã hội:
+- Bôi đen một đoạn văn bản nghi ngờ.
+- Click chuột phải vào hình ảnh liên quan và chọn "Phân tích tin giả" (hoặc bấm tổ hợp phím tắt).
+- Extension sẽ tự động trích xuất URL hình ảnh và đoạn text đã bôi đen để gửi đi.
 
-### Feature 2: Kiểm tra độ khớp ảnh - chữ
+### Feature 2: Hiển thị kết quả nhanh (Extension)
 
-Hệ thống tính độ tương đồng giữa hình ảnh và nội dung văn bản.
+- Hiển thị kết quả dưới dạng Popup, Toast Notification hoặc Sidebar ngay trên trang web hiện tại.
+- Hiển thị trạng thái đang phân tích (Loading spinner).
+- Hiển thị kết quả tổng hợp: Nhãn (Real/Fake/Suspicious), phần trăm độ tin cậy và lý do chi tiết.
 
-Ý tưởng:
+### Feature 3: API Backend nhận và tiền xử lý dữ liệu
 
-- Ảnh được đưa vào image encoder.
-- Text tiếng Việt được dịch sang tiếng Anh hoặc tiền xử lý phù hợp.
-- Text được đưa vào text encoder.
-- Tính cosine similarity giữa image embedding và text embedding.
+- Cung cấp endpoint POST nhận `image_url` (hoặc ảnh dạng base64) và `text`.
+- Xử lý tải ảnh từ URL về server (hoặc decode base64).
+- Dịch văn bản tiếng Việt sang tiếng Anh (nếu dùng CLIP nguyên bản tiếng Anh) hoặc xử lý text phù hợp.
 
-Kết quả:
+### Feature 4: Kiểm tra độ khớp ảnh - chữ (AI Pipeline)
 
-- Similarity cao: ảnh và chữ có khả năng liên quan.
-- Similarity thấp: có nguy cơ sai ngữ cảnh hoặc gắn ảnh không liên quan.
+- Ảnh và chữ được đưa vào image encoder và text encoder của CLIP.
+- Tính độ tương đồng (cosine similarity) giữa hai embedding.
+- Đánh giá khả năng "râu ông nọ cắm cằm bà kia".
 
-### Feature 3: Phân tích dấu hiệu văn bản đáng ngờ
+### Feature 5: Phân tích dấu hiệu văn bản đáng ngờ (Rule-based)
 
-Hệ thống tính điểm nghi ngờ dựa trên các dấu hiệu ngôn ngữ:
+- Đánh giá các từ khóa mang tính chất giật tít, câu view (`sốc`, `khẩn cấp`, `sự thật che giấu`,...).
+- Tính điểm dựa trên cách hành văn (viết hoa toàn bộ, dùng quá nhiều dấu chấm than).
+- Đây là module phụ trợ, chạy song song với CLIP để tăng độ chính xác.
 
-- Từ khóa giật tít: `sốc`, `khẩn cấp`, `chia sẻ ngay`, `sự thật bị che giấu`.
-- Dấu chấm than quá nhiều.
-- Cách viết hoa bất thường.
-- Nội dung quá ngắn nhưng mang tính khẳng định mạnh.
+### Feature 6: Kết luận tổng hợp và Giải thích
 
-Đây là module rule-based, dễ làm và dễ giải thích trong báo cáo.
+- Backend có hàm logic tổng hợp điểm số từ CLIP và Text Analyzer.
+- Cấu trúc lại lý do rõ ràng: "Độ tương đồng ảnh và văn bản thấp", "Văn bản có chứa nhiều từ ngữ giật tít",... để trả về cho Client.
 
-### Feature 4: Kết luận tổng hợp
+## 2.3. Optional Features
 
-Hệ thống tổng hợp các điểm thành phần để đưa ra kết quả:
+Đây là các tính năng mở rộng nếu nhóm thực hiện xong sớm phần MVP.
 
-- `Real`: ảnh và chữ tương đối khớp, text không có dấu hiệu đáng ngờ.
-- `Suspicious`: có một số dấu hiệu bất thường nhưng chưa đủ mạnh để kết luận fake.
-- `Fake`: nhiều dấu hiệu bất thường xuất hiện đồng thời.
+### Feature 7: ELA - Error Level Analysis
 
-### Feature 5: Giải thích kết quả
+- Tích hợp thêm script tính toán ELA cho ảnh để phát hiện dấu vết cắt ghép, chỉnh sửa vùng ảnh bằng Photoshop.
+- Điểm ELA sẽ được tính thêm vào trọng số cuối cùng.
 
-Hệ thống không chỉ hiện nhãn, mà cần hiện lý do:
+### Feature 8: Lưu lịch sử và Báo cáo
 
-- Ảnh và chữ có độ tương đồng thấp.
-- Nội dung có từ ngữ giật tít.
-- Ảnh có dấu hiệu chỉnh sửa.
-- Hệ thống không đủ chắc chắn.
-
-## 2.2. Optional Features
-
-Đây là các tính năng mở rộng nếu còn thời gian.
-
-### Feature 6: ELA - Error Level Analysis
-
-ELA giúp quan sát sự khác biệt về mức nén JPEG trong ảnh. Ảnh bị cắt ghép có thể có vùng sai khác mức lỗi nén so với phần còn lại.
-
-Lưu ý:
-
-- ELA không phải bằng chứng tuyệt đối.
-- Ảnh trên mạng xã hội thường bị nén nhiều lần, nên ELA có thể nhiễu nhiều.
-- Nên dùng ELA như một điểm phụ trợ, không phải kết luận chính.
-
-### Feature 7: FastAPI Backend
-
-Tách logic AI thành API:
-
-```text
-POST /predict
-Input: image + text
-Output: result + confidence + reasons
-```
-
-Mục đích:
-
-- Để mở rộng thành web frontend.
-- Để browser extension gọi API.
-- Để chia tách frontend/backend rõ ràng.
-
-### Feature 8: Browser Extension Prototype
-
-Nếu app đã ổn định, có thể làm extension prototype:
-
-- Popup extension có ô nhập text và upload ảnh.
-- Gọi API backend.
-- Hiện kết quả trong popup.
-
-Extension chỉ nên làm sau khi pipeline AI và app demo đã chạy ổn.
+- Popup Extension có tab lịch sử (History) lưu lại cục bộ (local storage) các nội dung đã kiểm tra.
 
 ---
 

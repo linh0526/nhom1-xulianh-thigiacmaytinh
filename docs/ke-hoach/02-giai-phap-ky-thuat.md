@@ -3,68 +3,34 @@
 ## 3.1. Hướng tiếp cận tổng thể
 
 Phương pháp chính:
-
 ```text
-Pretrained Model + Rule-based Scoring + Lightweight App
+Pretrained Model + Rule-based Scoring + FastAPI Backend + Browser Extension
 ```
 
 Lý do:
-
-- Thời gian chỉ có 3 tuần.
-- Nhóm chưa chắc có GPU.
-- Mục tiêu ưu tiên sản phẩm demo.
-- Dễ giải thích với giảng viên.
-- Dễ mở rộng về sau.
+- Đáp ứng trải nghiệm người dùng nhanh chóng trên nền tảng mạng xã hội (bôi đen text, chọn ảnh bằng phím tắt).
+- Thời gian chỉ có 3 tuần nên cần phân chia rõ Server xử lý nặng và Client gọn nhẹ.
+- Nhóm ưu tiên sử dụng model Pretrained để không tốn thời gian train lại model lớn.
 
 ## 3.2. Công nghệ đề xuất
 
 | Thành phần | Công nghệ đề xuất | Vai trò |
 |---|---|---|
-| App demo | Streamlit | Tạo giao diện nhanh |
-| Xử lý ảnh | PIL, OpenCV | Đọc ảnh, resize, ELA |
-| AI image-text | CLIP pretrained | Tính độ khớp ảnh - chữ |
-| Xử lý tiếng Việt | translate module hoặc API dịch | Đưa text tiếng Việt về tiếng Anh cho CLIP |
-| Logic tổng hợp | Python rule-based scoring | Tạo kết quả Real/Fake/Suspicious |
-| Optional API | FastAPI | Mở rộng thành backend |
-| Optional extension | Chrome Extension Manifest V3 | Mở rộng thành extension |
+| Client (Frontend) | Chrome/Edge Extension (HTML/CSS/JS, Manifest V3) | Lắng nghe phím tắt/context menu, lấy ảnh và text, gọi API và hiện popup kết quả. |
+| Server (Backend) | FastAPI (Python) | Nhận request từ Extension, chạy pipeline AI và trả về JSON. |
+| Xử lý ảnh | PIL, OpenCV | Đọc ảnh, resize, chuẩn bị input. |
+| AI image-text | CLIP pretrained | Tính độ tương đồng giữa ảnh và chữ (Cosine similarity). |
+| Xử lý tiếng Việt | Module dịch (google-translate) hoặc API dịch | Chuyển text tiếng Việt sang tiếng Anh trước khi đưa vào mô hình CLIP. |
+| Text Analyzer | Python rule-based scoring | Đếm từ khóa giật tít, dấu chấm than để tìm điểm đáng ngờ trong text. |
 
 ## 3.3. Mô hình AI đề xuất
 
-### CLIP
+### CLIP (Contrastive Language-Image Pre-Training)
+- CLIP là mô hình học được mối quan hệ giữa ảnh và văn bản. Nó có thể trích xuất đặc trưng (embedding) cho cả ảnh và văn bản rồi tính khoảng cách (similarity).
+- Điểm yếu: Hỗ trợ tiếng Anh tốt nhất, nên cần dịch tiếng Việt sang tiếng Anh.
 
-CLIP là mô hình pretrained học mối quan hệ giữa ảnh và văn bản. CLIP phù hợp với bài toán vì:
-
-- Có image encoder và text encoder.
-- Có thể tính similarity giữa ảnh và mô tả.
-- Không cần train lại.
-- Phù hợp cho demo image-text matching.
-
-Hạn chế:
-
-- CLIP phổ biến hỗ trợ tiếng Anh tốt hơn tiếng Việt.
-- Cần dịch text tiếng Việt sang tiếng Anh hoặc dùng model multilingual nếu tìm được.
-
-### PhoBERT - optional
-
-PhoBERT phù hợp với tiếng Việt, nhưng nếu dùng PhoBERT cùng CLIP image encoder thì cần thêm fusion model để ghép đặc trưng. Trong phạm vi 3 tuần, PhoBERT nên để ở hướng mở rộng.
-
-Hướng mở rộng:
-
-```text
-Image embedding: CLIP/ResNet
-Text embedding: PhoBERT
-Fusion: MLP classifier nhỏ
-```
-
-### ELA
-
-ELA dùng xử lý ảnh truyền thống để phát hiện dấu hiệu bất thường về nén JPEG.
-
-Công nghệ:
-
-- PIL để lưu lại ảnh ở chất lượng JPEG thấp hơn.
-- OpenCV/Numpy để tính sai khác pixel.
-- Sinh ảnh ELA visualization để đưa vào báo cáo/demo.
+### Rule-based Text Analyzer
+- Phân tích từ khóa giật tít, số lượng ký tự in hoa, dấu câu quá đà.
 
 ---
 
@@ -73,137 +39,44 @@ Công nghệ:
 ## 4.1. Kiến trúc pipeline MVP
 
 ```text
-Input: Image + Vietnamese Text
-        |
-        |-- Image Preprocessing
-        |      - read image
-        |      - resize
-        |      - normalize
-        |
-        |-- Text Preprocessing
-        |      - clean text
-        |      - translate Vietnamese to English
-        |
-        |-- CLIP Image Encoder
-        |      -> image embedding
-        |
-        |-- CLIP Text Encoder
-        |      -> text embedding
-        |
-        |-- Cosine Similarity
-        |      -> image_text_similarity_score
-        |
-        |-- Text Suspicious Analysis
-        |      -> text_suspicious_score
-        |
-        |-- Optional ELA Analysis
-        |      -> image_manipulation_score
-        |
-        |-- Final Scoring
-        |      -> Real / Fake / Suspicious
-        |
-        |-- Explanation Generator
-               -> reasons
+[Browser Extension]
+    |-- Lấy ảnh + Text bôi đen
+    |-- Gửi POST /api/analyze
+            |
+            v
+[FastAPI Backend]
+    |-- Image Preprocessing (Resize, Normalize)
+    |-- Text Preprocessing (Clean, Translate to English)
+    |
+    |-- CLIP Image Encoder -> image embedding
+    |-- CLIP Text Encoder -> text embedding
+    |-- Cosine Similarity -> image_text_similarity_score
+    |
+    |-- Text Suspicious Analysis -> text_suspicious_score
+    |
+    |-- Final Scoring Logic -> Real / Fake / Suspicious
+    |-- Explanation Generator -> Lý do cảnh báo
+            |
+            v
+[Browser Extension]
+    |-- Hiển thị kết quả UI dạng Toast / Popup
 ```
 
 ## 4.2. Logic tính điểm đề xuất
 
-Hệ thống có thể dùng 3 điểm chính:
+- `similarity_score`: 0 -> 1 (càng cao càng khớp)
+- `text_suspicious_score`: 0 -> 1 (càng cao càng giật tít)
 
+Công thức fake score tham khảo:
 ```text
-similarity_score: 0 -> 1
-text_suspicious_score: 0 -> 1
-image_manipulation_score: 0 -> 1
+fake_score = 0.60 * (1 - similarity_score) + 0.40 * text_suspicious_score
 ```
 
-Trong MVP, nếu chưa làm ELA thì đặt:
+Phân loại:
+- `Fake` nếu fake_score >= 0.70
+- `Suspicious` nếu fake_score >= 0.45
+- `Real` nếu fake_score < 0.45
 
-```text
-image_manipulation_score = 0
-```
-
-Công thức điểm fake tham khảo:
-
-```text
-fake_score =
-    0.55 * (1 - similarity_score)
-  + 0.30 * text_suspicious_score
-  + 0.15 * image_manipulation_score
-```
-
-Quy tắc phân loại:
-
-```text
-if fake_score >= 0.70:
-    result = "Fake"
-elif fake_score >= 0.40:
-    result = "Suspicious"
-else:
-    result = "Real"
-```
-
-Confidence:
-
-```text
-confidence = round(max(fake_score, 1 - fake_score) * 100)
-```
-
-## 4.3. Logic sinh lý do
-
-Ví dụ:
-
-```text
-if similarity_score < 0.25:
-    add_reason("Nội dung văn bản và hình ảnh có độ tương đồng thấp.")
-
-if text_suspicious_score > 0.50:
-    add_reason("Văn bản có dấu hiệu giật tít hoặc cảm xúc mạnh.")
-
-if image_manipulation_score > 0.60:
-    add_reason("Ảnh có dấu hiệu bất thường về nén/chỉnh sửa.")
-
-if no reason:
-    add_reason("Không phát hiện dấu hiệu bất thường rõ ràng.")
-```
-
-## 4.4. Hướng mở rộng AI sau MVP
-
-Sau khi MVP chạy ổn, có thể mở rộng:
-
-### Hướng 1: Fusion model nhỏ
-
-Train một MLP nhỏ:
-
-```text
-Input:
-- image embedding
-- text embedding
-- similarity score
-- text suspicious score
-- ELA score
-
-Output:
-- Real/Fake
-```
-
-Ưu điểm:
-
-- Vẫn nhẹ.
-- Có train model để báo cáo thêm.
-- Phù hợp Colab miễn phí.
-
-### Hướng 2: PhoBERT cho tiếng Việt
-
-Dùng PhoBERT để lấy text embedding tiếng Việt thay vì dịch sang tiếng Anh.
-
-### Hướng 3: Dataset lớn hơn
-
-Có thể thử nghiệm với:
-
-- Image Verification Corpus.
-- Weibo Dataset.
-- FakeNewsNet/Politifact/Gossipcop.
-- Tập demo tiếng Việt tự tạo.
-
----
-
+## 4.3. Sinh lý do cảnh báo
+- Similarity < 0.25: "Hình ảnh và văn bản không ăn nhập với nhau."
+- Text Suspicious > 0.6: "Văn bản chứa từ ngữ giật tít câu view."

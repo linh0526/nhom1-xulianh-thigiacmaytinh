@@ -8,18 +8,24 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === "analyzeFakeNews") {
-    // We have the image URL. Now we need the text. We will send a message to content script to get selected text.
-    chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ['content.js']
-    }, () => {
-      chrome.tabs.sendMessage(tab.id, { action: "getSelection" }, (response) => {
-        const text = response ? response.text : "";
-        const imageUrl = info.srcUrl;
-        
+    const imageUrl = info.srcUrl;
+    
+    // Attempt to get text, but if it fails, just send the image
+    try {
+      chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => window.getSelection().toString()
+      }, (injectionResults) => {
+        let text = "";
+        if (injectionResults && injectionResults[0] && injectionResults[0].result) {
+          text = injectionResults[0].result;
+        }
         analyzeData(imageUrl, text);
       });
-    });
+    } catch (e) {
+      console.error("Script injection failed", e);
+      analyzeData(imageUrl, "");
+    }
   }
 });
 
@@ -28,11 +34,9 @@ function analyzeData(imageUrl, text) {
   chrome.storage.local.set({ 
     isAnalyzing: true, 
     analysisResult: null, 
-    analysisError: null 
+    analysisError: null,
+    analysisRequestData: { image_url: imageUrl, text: text || " " }
   });
-  
-  // Open popup (Note: Chrome doesn't allow opening popup programmatically easily without user click, 
-  // so the user will click it, but we store the state).
   
   fetch("http://localhost:8000/analyze", {
     method: "POST",
@@ -44,8 +48,11 @@ function analyzeData(imageUrl, text) {
       text: text || " "
     })
   })
-  .then(res => {
-    if (!res.ok) throw new Error("API Error");
+  .then(async res => {
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error("API Error: " + text);
+    }
     return res.json();
   })
   .then(data => {

@@ -41,6 +41,7 @@ def predict_fake_news(image_path: str, text: str) -> dict:
     return {
         "result": result,
         "confidence": confidence,
+        "tags": text_result.get("tags", []),
         "scores": {
             "similarity": round(similarity, 3),
             "text_suspicious": round(text_suspicious, 3),
