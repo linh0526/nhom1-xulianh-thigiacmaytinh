@@ -2,12 +2,9 @@ from pathlib import Path
 
 from PIL import Image
 
-from src.image.ela import calculate_ela_score
-
 
 SUPPORTED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 DEFAULT_CLIP_IMAGE_SIZE = (224, 224)
-ELA_WARNING_THRESHOLD = 0.25
 
 
 def load_image(image_path: str) -> Image.Image:
@@ -40,22 +37,11 @@ def analyze_image(image_path: str) -> dict:
     image = load_image(image_path)
     width, height = image.size
 
-    # Tính ELA score
-    ela_score = calculate_ela_score(image_path)
-
-    # Danh sách lý do nghi ngờ
-    image_reasons = []
-
-    if ela_score > ELA_WARNING_THRESHOLD:
-        image_reasons.append(
-            "Image has unusual compression/manipulation patterns."
-        )
-
     return {
         "image_path": image_path,
         "image_valid": True,
         "image_size": [width, height],
-        "ela_score": round(ela_score, 3),
+        "ela_score": 0.0,
         "ela_image_path": None,
-        "image_reasons": image_reasons,
+        "image_reasons": [],
     }
