@@ -91,7 +91,9 @@ def compute_clip_similarity_internal(image, text: str, model, processor, device)
             text=[text], 
             images=image, 
             return_tensors="pt", 
-            padding=True
+            padding=True,
+            truncation=True,
+            max_length=77
         )
 
         # Chuyển dữ liệu sang GPU/CPU
