@@ -1,0 +1,12 @@
+Task: Triển khai Backend API
+Time: 2026-06-26T23:50
+Status: Hoàn thành
+
+Chi tiết:
+- Tạo thư mục backend.
+- Tạo file backend/main.py.
+- Cấu hình FastAPI app.
+- Cấu hình CORS middleware để cho phép Browser Extension có thể gọi API mà không bị lỗi Cross-Origin.
+- Xây dựng endpoint POST /analyze nhận {image_url, text}.
+- Tích hợp hàm predict_fake_news từ src.inference.predictor.
+- Tự động tải ảnh từ image_url về file tạm để đưa qua model, sau đó xóa file tạm sau khi dự đoán xong.

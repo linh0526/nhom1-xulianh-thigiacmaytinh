@@ -1,0 +1,16 @@
+Task: Triển khai Browser Extension
+Time: 2026-06-26T23:51
+Status: Hoàn thành
+
+Chi tiết:
+- Tạo thư mục extension.
+- Khởi tạo manifest.json phiên bản V3 với quyền contextMenus, activeTab, scripting, và cấu hình gọi localhost:8000.
+- Tạo background.js:
+  + Thêm menu chuột phải (Context Menu) "Analyze Fake News" khi click vào ảnh.
+  + Gửi thông điệp xuống content.js để lấy vùng text bôi đen.
+  + Gọi API fetch POST đến localhost:8000/analyze.
+  + Lưu kết quả vào chrome.storage.local.
+- Tạo content.js: Lắng nghe thông điệp và trích xuất text bôi đen bằng window.getSelection().
+- Tạo bộ giao diện popup (popup.html, popup.css, popup.js):
+  + Giao diện hiện đại với badge hiển thị Real/Fake/Suspicious.
+  + Đọc dữ liệu từ chrome.storage.local để hiển thị kết quả phân tích (score, confidence, reasons).
