@@ -1,18 +1,3 @@
-"""
-MODULE CLIP SIMILARITY - Thành viên 4
-============================================
-Mô tả: 
-    Module này sử dụng mô hình CLIP (Contrastive Language-Image Pretraining) của OpenAI
-    để tính độ tương đồng giữa một bức ảnh và văn bản mô tả.
-    
-Mục đích trong dự án:
-    - Phát hiện tin giả bằng cách kiểm tra xem ảnh và nội dung văn bản có khớp nhau không.
-    - Similarity cao → Tin có khả năng thật
-    - Similarity thấp → Có nghi ngờ tin giả (ảnh và text lệch ngữ cảnh)
-
-Output format tuân thủ đúng yêu cầu của TV6 (Mục 4.4 trong tài liệu phân công).
-"""
-
 import torch
 from transformers import CLIPProcessor, CLIPModel
 from PIL import Image, UnidentifiedImageError
@@ -25,8 +10,7 @@ _model = None
 _processor = None
 _device = None
 
-
-def load_clip_model(model_name: str = "openai/clip-vit-base-patch32"):
+def load_clip_model(model_name: str = "openai/clip-vit-large-patch14"):
     """
     Load mô hình CLIP và processor.
     
@@ -45,7 +29,7 @@ def load_clip_model(model_name: str = "openai/clip-vit-base-patch32"):
     if _model is not None:
         return _model, _processor, _device
 
-    print(f"[CLIP] Đang tải mô hình {model_name}... (Lần đầu có thể mất 10-30 giây)")
+    print(f"[CLIP] Đang tải mô hình {model_name}... (Lần đầu có thể mất vài phút vì model này lớn hơn)")
 
     # Tự động chọn GPU nếu có, ngược lại dùng CPU
     device = "cuda" if torch.cuda.is_available() else "cpu"

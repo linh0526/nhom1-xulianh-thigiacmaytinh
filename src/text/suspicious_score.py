@@ -1,3 +1,4 @@
+import re
 from src.text.preprocess import clean_text
 from src.text.translate import translate_to_english
 
@@ -20,6 +21,15 @@ INCITING_KEYWORDS = [
     "dap pha", "đập phá", "dao chinh", "đảo chính", "xuong duong", "xuống đường"
 ]
 
+def _find_keywords(text: str, keywords: list) -> list:
+    """Hàm hỗ trợ tìm kiếm từ khóa chính xác bằng Regex"""
+    matched = []
+    for kw in keywords:
+        # Dùng \b để đánh dấu ranh giới từ, tránh lỗi "soc" bắt nhầm trong "socola"
+        if re.search(r'\b' + re.escape(kw) + r'\b', text, re.IGNORECASE):
+            matched.append(kw)
+    return matched
+
 def calculate_suspicious_score(text: str) -> dict:
     normalized = clean_text(text).lower()
     reasons = []
@@ -27,20 +37,21 @@ def calculate_suspicious_score(text: str) -> dict:
     tags = []
 
     # Giật tít
-    matched_suspicious = [kw for kw in SUSPICIOUS_KEYWORDS if kw in normalized]
+    matched_suspicious = _find_keywords(normalized, SUSPICIOUS_KEYWORDS)
     if matched_suspicious:
         score += min(0.6, 0.15 * len(matched_suspicious))
         reasons.append("Văn bản có chứa từ khóa giật tít hoặc cảnh báo mạnh.")
+        tags.append("Giật tít") # Đã bổ sung Tag bị thiếu
 
     # Bạo lực
-    matched_violent = [kw for kw in VIOLENT_KEYWORDS if kw in normalized]
+    matched_violent = _find_keywords(normalized, VIOLENT_KEYWORDS)
     if matched_violent:
         score += min(0.8, 0.2 * len(matched_violent))
         reasons.append("Văn bản chứa ngôn từ bạo lực, nguy hiểm.")
         tags.append("Bạo lực")
 
     # Kích động
-    matched_inciting = [kw for kw in INCITING_KEYWORDS if kw in normalized]
+    matched_inciting = _find_keywords(normalized, INCITING_KEYWORDS)
     if matched_inciting:
         score += min(0.8, 0.2 * len(matched_inciting))
         reasons.append("Văn bản có dấu hiệu kích động, bạo loạn.")

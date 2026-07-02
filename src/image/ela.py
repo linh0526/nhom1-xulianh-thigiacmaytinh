@@ -1,5 +1,6 @@
+import os
+import tempfile
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 
 from PIL import Image, ImageChops, ImageStat
 
@@ -10,20 +11,26 @@ def calculate_ela_score(image_path: str, quality: int = 90) -> float:
     if not path.exists():
         raise FileNotFoundError(f"Image file not found: {image_path}")
 
-    with Image.open(path) as image:
-        original = image.convert("RGB")
+    # Tạo file tạm và đóng luồng (file descriptor) ngay lập tức để tránh lỗi Permission trên Windows
+    fd, temp_path_str = tempfile.mkstemp(suffix=".jpg")
+    os.close(fd)
+    temp_path = Path(temp_path_str)
 
-        with NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
-            temp_path = Path(tmp.name)
-
-        try:
+    try:
+        # Sử dụng context manager (with) cho cả ảnh gốc và ảnh nén để tránh rò rỉ bộ nhớ
+        with Image.open(path) as image:
+            original = image.convert("RGB")
             original.save(temp_path, "JPEG", quality=quality)
-            compressed = Image.open(temp_path).convert("RGB")
 
+        with Image.open(temp_path) as compressed_img:
+            compressed = compressed_img.convert("RGB")
+            
             diff = ImageChops.difference(original, compressed)
             stat = ImageStat.Stat(diff)
 
             mean_diff = sum(stat.mean) / len(stat.mean)
             return round(mean_diff / 255, 6)
-        finally:
+    finally:
+        # Đảm bảo xóa file tạm an toàn
+        if temp_path.exists():
             temp_path.unlink(missing_ok=True)
